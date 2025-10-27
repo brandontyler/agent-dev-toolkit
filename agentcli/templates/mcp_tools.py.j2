@@ -44,7 +44,7 @@ def get_mcp_tools_sync(mcp_config: List[Dict[str, Any]]) -> List:
         if context_manager:
             # Keep the context alive globally
             _mcp_context = context_manager
-            logger.info(f"✅ Loaded {len(tools)} MCP tools")
+            logger.info(f"[OK] Loaded {len(tools)} MCP tools")
         
         return tools
         

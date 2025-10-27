@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0
 #   • Keys ending with `_env` are replaced by the value of the referenced
 #     environment variable at runtime so that secrets never live in source
 #     control.  Example:
-#       api_key_env: OPENAI_API_KEY   # → api_key=<value of $OPENAI_API_KEY>
+#       api_key_env: OPENAI_API_KEY   # -> api_key=<value of $OPENAI_API_KEY>
 #
 #   How to switch model providers
 #   --------------------------------
@@ -98,7 +98,7 @@ def load_model(cfg: dict):
     """Dynamically import the model class and instantiate it.
 
     Steps:
-    1. Read `provider.class` → dotted import path.
+    1. Read `provider.class` -> dotted import path.
     2. Import the module and fetch the class.
     3. Resolve any *_env placeholders in `provider.kwargs`.
     4. Instantiate the model with those kwargs.

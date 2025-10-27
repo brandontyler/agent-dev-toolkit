@@ -9,7 +9,7 @@
     "start": "next start -p 3001",
     "lint": "next lint",
     "export": "next build && next export",
-    "postinstall": "node -e \"const fs=require('fs');const path='package-lock.json';if(fs.existsSync(path)){const lock=JSON.parse(fs.readFileSync(path));const sharp=['sharp','@img/sharp-libvips-darwin-arm64','@img/sharp-libvips-darwin-x64','@img/sharp-libvips-linux-arm','@img/sharp-libvips-linux-arm64','@img/sharp-libvips-linux-s390x','@img/sharp-libvips-linux-x64','@img/sharp-libvips-linuxmusl-arm64','@img/sharp-libvips-linuxmusl-x64','@img/sharp-linux-arm','@img/sharp-linux-arm64','@img/sharp-linux-s390x','@img/sharp-linux-x64','@img/sharp-win32-ia32','@img/sharp-win32-x64','@img/sharp-wasm32'];sharp.forEach(p=>{delete lock.packages?.[\\`node_modules/\\${p}\\`];delete lock.dependencies?.[p]});function clean(o){if(o&&typeof o==='object')for(const k in o)k==='optionalDependencies'&&o[k]?sharp.forEach(p=>delete o[k][p]):typeof o[k]==='object'&&clean(o[k])}clean(lock);fs.writeFileSync(path,JSON.stringify(lock,null,2));console.log('✅ Removed Sharp packages to maintain license compliance')}\""
+    "postinstall": "node scripts/postinstall.js"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.2.5",

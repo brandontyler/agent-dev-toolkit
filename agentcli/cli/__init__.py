@@ -243,7 +243,7 @@ def _dev_local(port, agent_path, env_file, rebuild, aws_profile, ui_dev):
         # Get absolute path to agent.py
         agent_file = (_project_dir / agent_path).resolve()
         if not agent_file.exists():
-            typer.echo(f"❌ Agent file not found: {agent_file}", err=True)
+            typer.echo(f"[ERROR] Agent file not found: {agent_file}", err=True)
             raise typer.Exit(1)
             
         # Install or reinstall dependencies if needed
@@ -252,7 +252,7 @@ def _dev_local(port, agent_path, env_file, rebuild, aws_profile, ui_dev):
             # nosec B603 – safe fixed command list
             _run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
         elif not requirements.exists():
-            typer.echo("⚠️  Warning: No requirements.txt found", err=True)
+            typer.echo("[WARNING] No requirements.txt found", err=True)
         
         # AUTO-BUILD UI: Check and build UI assets if needed
         if not ui_dev:  # Only auto-build for production UI, not dev mode
@@ -261,22 +261,22 @@ def _dev_local(port, agent_path, env_file, rebuild, aws_profile, ui_dev):
             if not ui_builder.is_built():
                 # Check Node.js availability first
                 if not ui_builder.check_node_installed():
-                    typer.echo("❌ Node.js not found. Cannot build UI assets.", err=True)
+                    typer.echo("[ERROR] Node.js not found. Cannot build UI assets.", err=True)
                     typer.echo("   Please install Node.js ≥18 from https://nodejs.org/", err=True)
                     typer.echo("   Then run: adt dev", err=True)
                     raise typer.Exit(1)
                 
                 # Build UI
-                typer.echo("🎨 Building UI assets... This is a one-time setup that may take a moment to complete.")
+                typer.echo("[BUILD] Building UI assets... This is a one-time setup that may take a moment to complete.")
                 if not ui_builder.build_and_prepare():
-                    typer.echo("❌ UI build failed.", err=True)
+                    typer.echo("[ERROR] UI build failed.", err=True)
                     typer.echo("   Check that Node.js ≥18 is installed and try again.", err=True)
                     raise typer.Exit(1)
         
         # Show clean status messages
-        typer.echo("✅ Agent loaded")
+        typer.echo("[OK] Agent loaded")
         provider_class = _get_provider_class(_project_dir)
-        typer.echo(f"🤖 Agent uses {provider_class} as Model Provider")
+        typer.echo(f"[INFO] Agent uses {provider_class} as Model Provider")
 
         # Create the FastAPI app with our agent
         attempted_install = False
@@ -292,25 +292,25 @@ def _dev_local(port, agent_path, env_file, rebuild, aws_profile, ui_dev):
 
                 requirements = Path("requirements.txt")
                 if not requirements.exists():
-                    typer.echo(f"❌ Missing dependency '{e.name}' and no requirements.txt found.", err=True)
+                    typer.echo(f"[ERROR] Missing dependency '{e.name}' and no requirements.txt found.", err=True)
                     raise
 
-                typer.echo(f"📦 Missing dependency '{e.name}'. Installing project deps …")
+                typer.echo(f"[INFO] Missing dependency '{e.name}'. Installing project deps ...")
                 try:
                     # nosec B603 – safe fixed command list
                     _run([sys.executable, "-m", "pip", "install", "-r", str(requirements)])
                 except subprocess.CalledProcessError as err:
-                    typer.echo(f"❌ Failed to install requirements: {err}", err=True)
+                    typer.echo(f"[ERROR] Failed to install requirements: {err}", err=True)
                     raise
         
         # Run the development server
-        typer.echo(f"🚀 Chat UI available at http://localhost:{port}")
+        typer.echo(f"[INFO] Chat UI available at http://localhost:{port}")
         if ui_dev:
-            typer.echo("🔄 Hot reload enabled for UI development")
+            typer.echo("[INFO] Hot reload enabled for UI development")
         uvicorn.run(app, host="0.0.0.0", port=port)
         
     except Exception as e:
-        typer.echo(f"❌ Error running development server: {e}", err=True)
+        typer.echo(f"[ERROR] Error running development server: {e}", err=True)
         raise typer.Exit(1)
 
 def _dev_container(port, env_file, rebuild, aws_profile):
@@ -331,9 +331,9 @@ def _dev_container(port, env_file, rebuild, aws_profile):
                 cmd.append("--no-cache")
             cmd.extend(["-f", str(_project_dir / "Dockerfile"), str(_project_dir)])
             
-            typer.echo("🏗️ Building Docker image agent:latest…")
+            typer.echo("[BUILD] Building Docker image agent:latest...")
             _run(cmd)
-            typer.echo("✅ Successfully built agent:latest")
+            typer.echo("[SUCCESS] Successfully built agent:latest")
             
         # Prepare env_file path if provided
         env_file_path = Path(env_file).resolve() if env_file else None
@@ -342,8 +342,8 @@ def _dev_container(port, env_file, rebuild, aws_profile):
         container_internal_port = 8000  # Internal container port
         ui_port = port  # UI runs on the requested port (same as local mode)
         
-        typer.echo("🐳 Starting containerized backend...")
-        typer.echo(f"🔧 Backend API will run internally on port {container_internal_port}")
+        typer.echo("[INFO] Starting containerized backend...")
+        typer.echo(f"[INFO] Backend API will run internally on port {container_internal_port}")
         
         # Start container in detached mode
         container_run(
@@ -364,21 +364,21 @@ def _dev_container(port, env_file, rebuild, aws_profile):
         max_retry_interval = 5  # Cap at 5 seconds
         
         for attempt in range(max_retries):
-            typer.echo(f"🔍 Health check attempt {attempt + 1}/{max_retries}")
+            typer.echo(f"[INFO] Health check attempt {attempt + 1}/{max_retries}")
             if _container_is_healthy(container_internal_port):
                 break
             
             # Exponential backoff with jitter for better reliability
             if attempt < max_retries - 1:  # Don't sleep after last attempt
                 current_interval = min(retry_interval * (1.5 ** attempt), max_retry_interval)
-                typer.echo(f"⏱️  Waiting {current_interval:.1f}s before next check...")
+                typer.echo(f"[INFO] Waiting {current_interval:.1f}s before next check...")
                 time.sleep(current_interval)  # nosec B311 – intentional health check delay with exponential backoff
         else:
-            typer.echo("❌ Container failed to start properly after multiple attempts", err=True)
-            typer.echo("💡 Check container logs with: docker logs $(docker ps -q --filter ancestor=agent:latest)")
+            typer.echo("[ERROR] Container failed to start properly after multiple attempts", err=True)
+            typer.echo("[INFO] Check container logs with: docker logs $(docker ps -q --filter ancestor=agent:latest)")
             raise typer.Exit(1)
         
-        typer.echo(f"✅ Backend running internally on port {container_internal_port}")
+        typer.echo(f"[OK] Backend running internally on port {container_internal_port}")
         
         # AUTO-BUILD UI: Check and build UI assets if needed (same as local mode)
         from ..ui_builder import ui_builder
@@ -386,28 +386,28 @@ def _dev_container(port, env_file, rebuild, aws_profile):
         if not ui_builder.is_built():
             # Check Node.js availability first
             if not ui_builder.check_node_installed():
-                typer.echo("❌ Node.js not found. Cannot build UI assets.", err=True)
+                typer.echo("[ERROR] Node.js not found. Cannot build UI assets.", err=True)
                 typer.echo("   Please install Node.js ≥18 from https://nodejs.org/", err=True)
                 typer.echo("   Then run: adt dev --container", err=True)
                 raise typer.Exit(1)
             
             # Build UI
-            typer.echo("🎨 Building UI assets... This is a one-time setup that may take a moment to complete.")
+            typer.echo("[BUILD] Building UI assets... This is a one-time setup that may take a moment to complete.")
             if not ui_builder.build_and_prepare():
-                typer.echo("❌ UI build failed.", err=True)
+                typer.echo("[ERROR] UI build failed.", err=True)
                 typer.echo("   Check that Node.js ≥18 is installed and try again.", err=True)
                 raise typer.Exit(1)
         
         # Now start the local UI that connects to the containerized backend
-        typer.echo("🎨 Starting local UI server...")
-        typer.echo(f"🚀 Application available at http://localhost:{ui_port}")
-        typer.echo("💡 Same URL as local mode - UI runs locally, backend runs in container")
+        typer.echo("[INFO] Starting local UI server...")
+        typer.echo(f"[INFO] Application available at http://localhost:{ui_port}")
+        typer.echo("[INFO] Same URL as local mode - UI runs locally, backend runs in container")
         
         # Start local UI server that proxies to containerized backend
         _start_ui_with_container_backend(ui_port, container_internal_port)
         
     except Exception as e:
-        typer.echo(f"❌ Error running containerized development server: {e}", err=True)
+        typer.echo(f"[ERROR] Error running containerized development server: {e}", err=True)
         # Clean up container if UI fails
         container_stop()
         raise typer.Exit(1)
@@ -518,7 +518,7 @@ def container_build(
         
         typer.echo(f"Building Docker image {tag}...")
         _run(cmd)
-        typer.echo(f"✅ Successfully built {tag}")
+        typer.echo(f"[SUCCESS] Successfully built {tag}")
         
     except subprocess.CalledProcessError as e:
         typer.echo(f"Error building Docker image: {e}", err=True)
@@ -544,12 +544,12 @@ def container_run(
     is_valid, error_msg, providers = env_manager.validate_provider_configuration(_project_dir)
     
     if not is_valid:
-        typer.echo(f"❌ Provider configuration error: {error_msg}", err=True)
+        typer.echo(f"[ERROR] Provider configuration error: {error_msg}", err=True)
         if len(providers) > 1:
-            typer.echo("💡 Please comment out all but one provider in .agent.yaml", err=True)
+            typer.echo("[INFO] Please comment out all but one provider in .agent.yaml", err=True)
             typer.echo("   Only one provider.class should be active at a time", err=True)
         elif len(providers) == 0:
-            typer.echo("💡 Please uncomment one provider.class in .agent.yaml", err=True)
+            typer.echo("[INFO] Please uncomment one provider.class in .agent.yaml", err=True)
         raise typer.Exit(1)
     
     needs_aws = providers[0] == "strands.models.BedrockModel"
@@ -601,7 +601,7 @@ def container_run(
     
     # Only handle AWS credentials if using Bedrock
     if needs_aws:
-        typer.echo(f"ℹ️  Bedrock provider configured - setting up AWS credentials")
+        typer.echo(f"[INFO] Bedrock provider configured - setting up AWS credentials")
         
         # 2. Handle AWS profile if specified (overrides .env AWS settings)
         if aws_profile:
@@ -661,7 +661,7 @@ def container_run(
         
         # Let boto3 handle region defaults - no hardcoded fallback
     else:
-        typer.echo(f"ℹ️  {providers[0]} provider configured - skipping AWS credential setup")
+        typer.echo(f"[INFO] {providers[0]} provider configured - skipping AWS credential setup")
     
     # Add detach flag if requested
     if detach:
@@ -686,15 +686,15 @@ def build_ui():
     """Build the Next.js UI for the CLI."""
     from ..ui_builder import ui_builder
     
-    typer.echo("🏗️  Building Agent CLI UI...")
+    typer.echo("[BUILD] Building Agent CLI UI...")
     
     success = ui_builder.build_and_prepare()
     
     if success:
-        typer.echo("🎉 UI build completed successfully!")
+        typer.echo("[SUCCESS] UI build completed successfully!")
         typer.echo("The UI will now be available when running 'adt dev'")
     else:
-        typer.echo("❌ UI build failed. Check that Node.js is installed.", err=True)
+        typer.echo("[ERROR] UI build failed. Check that Node.js is installed.", err=True)
         typer.echo("Install Node.js from https://nodejs.org/", err=True)
         raise typer.Exit(1)
 
@@ -716,18 +716,18 @@ def regenerate_templates():
         # Regenerate container entrypoint
         container_path = _project_dir / "container_entrypoint.py"
         template_generator.write_container_server(container_path)
-        typer.echo(f"✅ Regenerated {container_path}")
+        typer.echo(f"[SUCCESS] Regenerated {container_path}")
         
         # Regenerate local dev server (if needed in the future)
         # local_path = Path("agentcli/server/dev_server.py")
         # template_generator.write_local_server(local_path)
         # typer.echo(f"✅ Regenerated {local_path}")
         
-        typer.echo("🎉 All templates regenerated successfully!")
-        typer.echo("💡 Both local and container modes now use the same shared utilities")
+        typer.echo("[SUCCESS] All templates regenerated successfully!")
+        typer.echo("[INFO] Both local and container modes now use the same shared utilities")
         
     except Exception as e:
-        typer.echo(f"❌ Error regenerating templates: {e}", err=True)
+        typer.echo(f"[ERROR] Error regenerating templates: {e}", err=True)
         raise typer.Exit(1)
 
 @APP.command("add")

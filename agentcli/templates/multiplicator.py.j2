@@ -19,7 +19,7 @@ def multiplicator(number1: str, number2: str) -> str:
     Returns:
         str: The product of the two numbers
     """
-    print(f"🔢 Multiplicator called with: {number1} × {number2}")
+    print(f"[INFO] Multiplicator called with: {number1} * {number2}")
     
     try:
         # Convert inputs to float to handle both integers and decimals
@@ -35,14 +35,14 @@ def multiplicator(number1: str, number2: str) -> str:
         else:
             result_str = str(result)
         
-        print(f"✅ Multiplication result: {num1} × {num2} = {result_str}")
+        print(f"[OK] Multiplication result: {num1} * {num2} = {result_str}")
         return result_str
         
     except ValueError as e:
         error_msg = f"Error: Could not convert inputs to numbers. Got '{number1}' and '{number2}'"
-        print(f"❌ {error_msg}")
+        print(f"[ERROR] {error_msg}")
         return error_msg
     except Exception as e:
         error_msg = f"Error during multiplication: {str(e)}"
-        print(f"❌ {error_msg}")
+        print(f"[ERROR] {error_msg}")
         return error_msg 

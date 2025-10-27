@@ -94,7 +94,7 @@ def extract_strands_trace_data(agent_response, message_id: str = None, *, agent=
     
     # Check if it's a Strands AgentResult object with metrics
     if not hasattr(agent_response, 'metrics'):
-        print("❌ No metrics found in agent response")
+        print("[ERROR] No metrics found in agent response")
         return None
     
     try:
@@ -114,7 +114,7 @@ def extract_strands_trace_data(agent_response, message_id: str = None, *, agent=
         return convert_to_ui_format(agent_response, per_message_data, message_id, agent=agent)
         
     except Exception as e:
-        print(f"❌ Error extracting trace data: {e}")
+        print(f"[ERROR] Error extracting trace data: {e}")
         return None
 
 def calculate_per_message_metrics(current_summary: Dict[str, Any], agent_obj) -> Dict[str, Any]:
@@ -349,7 +349,7 @@ def convert_to_ui_format(agent_response, per_message_data: Dict[str, Any], messa
             "result": tool_data.get('result', '')
         })
     
-    print(f"🎯 Per-message: {per_message_data['new_cycles']} cycles, {per_message_data['token_delta']['totalTokens']} tokens, {len(tool_calls)} tool calls")
+    print(f"[METRICS] Per-message: {per_message_data['new_cycles']} cycles, {per_message_data['token_delta']['totalTokens']} tokens, {len(tool_calls)} tool calls")
     
     return {
         "message_id": message_id,
@@ -394,7 +394,7 @@ def reset_metrics_state():
     global _agent_snapshots, _session_totals
     _agent_snapshots.clear()
     _session_totals.clear()
-    print("🔄 Reset metrics state")
+    print("[RESET] Reset metrics state")
 
 def get_trace_data(agent_response, message: str, response_text: str, model_name: str, mode: str = "local", real_tool_calls: list = None) -> Optional[Dict[str, Any]]:
     """Get trace data from agent response."""
@@ -406,12 +406,12 @@ def get_trace_data(agent_response, message: str, response_text: str, model_name:
     trace_data = extract_strands_trace_data(agent_response, message_id)
     
     if trace_data:
-        print("✅ Using REAL Strands trace data with per-message metrics")
+        print("[OK] Using REAL Strands trace data with per-message metrics")
         # Update with the actual message text
         trace_data['message_text'] = message
         return trace_data
     else:
-        print("❌ No real Strands trace data found")
+        print("[ERROR] No real Strands trace data found")
         return None
 
 def extract_direct_metrics_from_response(agent_response, message_id: str = None) -> Optional[Dict[str, Any]]:
@@ -422,7 +422,7 @@ def extract_direct_metrics_from_response(agent_response, message_id: str = None)
     
     # Check if it's a Strands AgentResult object with metrics
     if not hasattr(agent_response, 'metrics'):
-        print("❌ No metrics found in agent response")
+        print("[ERROR] No metrics found in agent response")
         return None
     
     try:
@@ -502,7 +502,7 @@ def extract_direct_metrics_from_response(agent_response, message_id: str = None)
         return convert_to_ui_format(agent_response, direct_metrics, message_id)
         
     except Exception as e:
-        print(f"❌ Error extracting direct metrics: {e}")
+        print(f"[ERROR] Error extracting direct metrics: {e}")
         return None 
 
 
@@ -536,12 +536,12 @@ def create_app(agent_path: Path, ui_dev: bool = False, container_backend_port: i
     
     # Setup UI serving
     if ui_dev:
-        print("🚀 Starting UI in development mode...")
+        print("Starting UI in development mode...")
         try:
             ui_process = ui_builder.start_dev_server(3001)
-            print("✅ UI dev server started on http://localhost:3001")
+            print("[OK] UI dev server started on http://localhost:3001")
         except Exception as e:
-            print(f"❌ Failed to start UI dev server: {e}")
+            print(f"[ERROR] Failed to start UI dev server: {e}")
             ui_dev = False
     
     if not ui_dev:

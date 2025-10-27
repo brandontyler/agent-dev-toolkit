@@ -22,11 +22,11 @@ class ProjectGenerator:
         
         for directory in directories:
             directory.mkdir(parents=True, exist_ok=True)
-            typer.echo(f"  📁 {directory.relative_to(project_dir)}/")
+            typer.echo(f"  [DIR] {directory.relative_to(project_dir)}/")
         
         # Create __init__.py files
         (project_dir / "src" / "__init__.py").touch()
-        typer.echo(f"  📄 src/__init__.py")
+        typer.echo(f"  [FILE] src/__init__.py")
     
     def generate_project_files(self, project_dir: Path, config: ProjectConfig) -> None:
         """Generate all project files from templates."""
@@ -42,10 +42,10 @@ class ProjectGenerator:
                 
                 # Write the file
                 file_path.write_text(content)
-                typer.echo(f"  📄 {target_path}")
+                typer.echo(f"  [FILE] {target_path}")
                 
             except Exception as e:
-                typer.echo(f"  ❌ Failed to generate {target_path}: {e}", err=True)
+                typer.echo(f"  [ERROR] Failed to generate {target_path}: {e}", err=True)
                 raise
     
     def create_additional_files(self, project_dir: Path, config: ProjectConfig) -> None:
@@ -153,7 +153,7 @@ A `Dockerfile` is provided as an example for running your agent in a container l
 For more advanced usage, deployment options, and detailed documentation, refer to the [AgentCLI Documentation](https://github.com/strands-ai/agents-cli).
 """
         (project_dir / "README.md").write_text(readme_content)
-        typer.echo(f"  📄 README.md")
+        typer.echo(f"  [FILE] README.md")
     
     def validate_project_name(self, name: str) -> str:
         """Validate and normalize project name."""
@@ -199,7 +199,7 @@ For more advanced usage, deployment options, and detailed documentation, refer t
         # Create configuration
         config = ProjectConfig(name=name, pkg_name=pkg_name, **config_overrides)
         
-        typer.echo(f"🚀 Creating project '{name}' (package: {pkg_name})")
+        typer.echo(f"Creating project '{name}' (package: {pkg_name})")
         
         try:
             # Create directory structure
@@ -211,13 +211,13 @@ For more advanced usage, deployment options, and detailed documentation, refer t
             # Create additional files
             self.create_additional_files(project_dir, config)
             
-            typer.secho(f"\n✅ Project '{name}' created successfully!", fg=typer.colors.GREEN)
-            typer.echo(f"\n💡 See {name}/README.md for all available options and detailed setup instructions")
+            typer.secho(f"\n[SUCCESS] Project '{name}' created successfully!", fg=typer.colors.GREEN)
+            typer.echo(f"\n[INFO] See {name}/README.md for all available options and detailed setup instructions")
             
             return project_dir
             
         except Exception as e:
-            typer.echo(f"\n❌ Failed to create project: {e}", err=True)
+            typer.echo(f"\n[ERROR] Failed to create project: {e}", err=True)
             # Clean up on failure
             if project_dir.exists():
                 import shutil

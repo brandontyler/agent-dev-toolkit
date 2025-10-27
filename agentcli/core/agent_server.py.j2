@@ -79,12 +79,12 @@ def load_agent():
     """Load the agent from the agent.py file."""
     agent_path = Path("/app/src/agent.py")
     
-    print(f"🔍 Checking for agent file at: {agent_path}")
-    print(f"🔍 File exists: {agent_path.exists()}")
+    print(f"[INFO] Checking for agent file at: {agent_path}")
+    print(f"[INFO] File exists: {agent_path.exists()}")
     
     if not agent_path.exists():
-        print(f"❌ Agent file not found at {agent_path}")
-        print(f"📂 Contents of /app/src: {list(Path('/app/src').iterdir()) if Path('/app/src').exists() else 'Directory not found'}")
+        print(f"[ERROR] Agent file not found at {agent_path}")
+        print(f"[INFO] Contents of /app/src: {list(Path('/app/src').iterdir()) if Path('/app/src').exists() else 'Directory not found'}")
         raise ImportError(f"Agent file not found: {agent_path}")
     
     spec = importlib.util.spec_from_file_location("agent", agent_path)
@@ -105,7 +105,7 @@ def load_agent():
         available_objects = [attr for attr in dir(agent_module) if not attr.startswith('_')]
         raise ImportError(f"No 'agent' object found. Available objects: {available_objects}")
     
-    print(f"✅ Successfully loaded agent: {type(agent)}")
+    print(f"[OK] Successfully loaded agent: {type(agent)}")
     return agent
 {% endif %}
 
@@ -134,12 +134,12 @@ def create_app():
     {% if mode == "local" %}
     # Setup UI serving
     if ui_dev:
-        print("🚀 Starting UI in development mode...")
+        print("Starting UI in development mode...")
         try:
             ui_process = ui_builder.start_dev_server(3001)
-            print("✅ UI dev server started on http://localhost:3001")
+            print("[OK] UI dev server started on http://localhost:3001")
         except Exception as e:
-            print(f"❌ Failed to start UI dev server: {e}")
+            print(f"[ERROR] Failed to start UI dev server: {e}")
             ui_dev = False
     
     if not ui_dev:
@@ -410,7 +410,7 @@ def create_app():
                 raise HTTPException(status_code=500, detail=str(e))
                 
     except Exception as e:
-        print(f"❌ Failed to load agent: {e}")
+        print(f"[ERROR] Failed to load agent: {e}")
         
         # nosem: useless-inner-function
         @app.post("/chat")
@@ -552,16 +552,16 @@ def main():
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8000"))
     
-    print(f"🐳 Starting Strands Agent Server on {host}:{port}")
+    print(f"Starting Strands Agent Server on {host}:{port}")
     
     try:
         app = create_app()
-        print(f"✅ App created successfully")
-        print(f"🌐 Server available at http://localhost:{port}")
+        print(f"[OK] App created successfully")
+        print(f"[INFO] Server available at http://localhost:{port}")
         
         uvicorn.run(app, host=host, port=port)
     except Exception as e:
-        print(f"❌ Failed to start server: {e}")
+        print(f"[ERROR] Failed to start server: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

@@ -75,7 +75,7 @@ import time
 from typing import Dict, Any, Optional, List
 
 # --- Global state -----------------------------------------------------------------
-# Per-agent snapshot table keyed by id(agent) → last cumulative counters seen.
+# Per-agent snapshot table keyed by id(agent) -> last cumulative counters seen.
 _agent_snapshots: dict[int, Dict[str, Any]] = {}
 
 # Running totals for the current UI session (reset when chat window reloads)
@@ -92,7 +92,7 @@ def extract_strands_trace_data(agent_response, message_id: str = None, *, agent=
     
     # Check if it's a Strands AgentResult object with metrics
     if not hasattr(agent_response, 'metrics'):
-        print("❌ No metrics found in agent response")
+        print("[ERROR] No metrics found in agent response")
         return None
     
     try:
@@ -112,7 +112,7 @@ def extract_strands_trace_data(agent_response, message_id: str = None, *, agent=
         return convert_to_ui_format(agent_response, per_message_data, message_id, agent=agent)
         
     except Exception as e:
-        print(f"❌ Error extracting trace data: {e}")
+        print(f"[ERROR] Error extracting trace data: {e}")
         return None
 
 def calculate_per_message_metrics(current_summary: Dict[str, Any], agent_obj) -> Dict[str, Any]:
@@ -347,7 +347,7 @@ def convert_to_ui_format(agent_response, per_message_data: Dict[str, Any], messa
             "result": tool_data.get('result', '')
         })
     
-    print(f"🎯 Per-message: {per_message_data['new_cycles']} cycles, {per_message_data['token_delta']['totalTokens']} tokens, {len(tool_calls)} tool calls")
+    print(f"[METRICS] Per-message: {per_message_data['new_cycles']} cycles, {per_message_data['token_delta']['totalTokens']} tokens, {len(tool_calls)} tool calls")
     
     return {
         "message_id": message_id,
@@ -392,7 +392,7 @@ def reset_metrics_state():
     global _agent_snapshots, _session_totals
     _agent_snapshots.clear()
     _session_totals.clear()
-    print("🔄 Reset metrics state")
+    print("[RESET] Reset metrics state")
 
 def get_trace_data(agent_response, message: str, response_text: str, model_name: str, mode: str = "local", real_tool_calls: list = None) -> Optional[Dict[str, Any]]:
     """Get trace data from agent response."""
@@ -404,12 +404,12 @@ def get_trace_data(agent_response, message: str, response_text: str, model_name:
     trace_data = extract_strands_trace_data(agent_response, message_id)
     
     if trace_data:
-        print("✅ Using REAL Strands trace data with per-message metrics")
+        print("[OK] Using REAL Strands trace data with per-message metrics")
         # Update with the actual message text
         trace_data['message_text'] = message
         return trace_data
     else:
-        print("❌ No real Strands trace data found")
+        print("[ERROR] No real Strands trace data found")
         return None
 
 def extract_direct_metrics_from_response(agent_response, message_id: str = None) -> Optional[Dict[str, Any]]:
@@ -420,7 +420,7 @@ def extract_direct_metrics_from_response(agent_response, message_id: str = None)
     
     # Check if it's a Strands AgentResult object with metrics
     if not hasattr(agent_response, 'metrics'):
-        print("❌ No metrics found in agent response")
+        print("[ERROR] No metrics found in agent response")
         return None
     
     try:
@@ -500,7 +500,7 @@ def extract_direct_metrics_from_response(agent_response, message_id: str = None)
         return convert_to_ui_format(agent_response, direct_metrics, message_id)
         
     except Exception as e:
-        print(f"❌ Error extracting direct metrics: {e}")
+        print(f"[ERROR] Error extracting direct metrics: {e}")
         return None 
 
 
@@ -517,12 +517,12 @@ def load_agent():
     """Load the agent from the agent.py file."""
     agent_path = Path("/app/src/agent.py")
     
-    print(f"🔍 Checking for agent file at: {agent_path}")
-    print(f"🔍 File exists: {agent_path.exists()}")
+    print(f"[INFO] Checking for agent file at: {agent_path}")
+    print(f"[INFO] File exists: {agent_path.exists()}")
     
     if not agent_path.exists():
-        print(f"❌ Agent file not found at {agent_path}")
-        print(f"📂 Contents of /app/src: {list(Path('/app/src').iterdir()) if Path('/app/src').exists() else 'Directory not found'}")
+        print(f"[ERROR] Agent file not found at {agent_path}")
+        print(f"[INFO] Contents of /app/src: {list(Path('/app/src').iterdir()) if Path('/app/src').exists() else 'Directory not found'}")
         raise ImportError(f"Agent file not found: {agent_path}")
     
     spec = importlib.util.spec_from_file_location("agent", agent_path)
@@ -543,7 +543,7 @@ def load_agent():
         available_objects = [attr for attr in dir(agent_module) if not attr.startswith('_')]
         raise ImportError(f"No 'agent' object found. Available objects: {available_objects}")
     
-    print(f"✅ Successfully loaded agent: {type(agent)}")
+    print(f"[OK] Successfully loaded agent: {type(agent)}")
     return agent
 
 
@@ -611,7 +611,7 @@ def create_app():
                 raise HTTPException(status_code=500, detail=str(e))
                 
     except Exception as e:
-        print(f"❌ Failed to load agent: {e}")
+        print(f"[ERROR] Failed to load agent: {e}")
         
         # nosem: useless-inner-function
         @app.post("/chat")
@@ -753,16 +753,16 @@ def main():
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8000"))
     
-    print(f"🐳 Starting Strands Agent Server on {host}:{port}")
+    print(f"Starting Strands Agent Server on {host}:{port}")
     
     try:
         app = create_app()
-        print(f"✅ App created successfully")
-        print(f"🌐 Server available at http://localhost:{port}")
+        print(f"[OK] App created successfully")
+        print(f"[INFO] Server available at http://localhost:{port}")
         
         uvicorn.run(app, host=host, port=port)
     except Exception as e:
-        print(f"❌ Failed to start server: {e}")
+        print(f"[ERROR] Failed to start server: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

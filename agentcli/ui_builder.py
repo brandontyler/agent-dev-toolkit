@@ -8,6 +8,7 @@ import os
 import subprocess
 import shutil
 import logging
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -15,11 +16,13 @@ logger = logging.getLogger(__name__)
 
 class UIBuilder:
     """Builds and manages the embedded UI project."""
-    
+
     def __init__(self):
         self.ui_dir = Path(__file__).parent / "ui"
         self.build_dir = self.ui_dir / "out"
         self.static_dir = Path(__file__).parent / "static"
+        # Use .cmd extension for npm on Windows
+        self.npm_cmd = "npm.cmd" if sys.platform == "win32" else "npm"
         
     def check_node_installed(self) -> bool:
         """Check if Node.js is installed."""
@@ -39,9 +42,9 @@ class UIBuilder:
         """Check if npm is installed."""
         try:
             result = subprocess.run(
-                ["npm", "--version"], 
-                capture_output=True, 
-                text=True, 
+                [self.npm_cmd, "--version"],
+                capture_output=True,
+                text=True,
                 check=True
             )
             logger.info(f"npm version: {result.stdout.strip()}")
@@ -63,7 +66,7 @@ class UIBuilder:
                 package_lock.unlink()
                 
             result = subprocess.run(
-                ["npm", "install"],
+                [self.npm_cmd, "install"],
                 cwd=self.ui_dir,
                 capture_output=True,
                 text=True,
@@ -82,7 +85,7 @@ class UIBuilder:
             
         try:
             result = subprocess.run(
-                ["npm", "run", "build"],
+                [self.npm_cmd, "run", "build"],
                 cwd=self.ui_dir,
                 capture_output=True,
                 text=True,
@@ -115,12 +118,12 @@ class UIBuilder:
         """Complete build process: install deps, build, and copy assets."""
         # Check prerequisites
         if not self.check_node_installed():
-            logger.warning("⚠️  Node.js not found. UI will not be available.")
+            logger.warning("[WARNING] Node.js not found. UI will not be available.")
             logger.warning("   Install Node.js from https://nodejs.org/")
             return False
             
         if not self.check_npm_installed():
-            logger.warning("⚠️  npm not found. UI will not be available.")
+            logger.warning("[WARNING] npm not found. UI will not be available.")
             return False
         
         # Build process (remove verbose step messages)
@@ -132,7 +135,7 @@ class UIBuilder:
         
         for step_name, step_func in steps:
             if not step_func():
-                logger.error(f"❌ Failed: {step_name}")
+                logger.error(f"[ERROR] Failed: {step_name}")
                 return False
         
         return True
@@ -155,14 +158,14 @@ class UIBuilder:
         if not self.ui_dir.exists():
             raise RuntimeError(f"UI directory not found: {self.ui_dir}")
             
-        logger.info(f"🚀 Starting UI dev server on port {port}...")
+        logger.info(f"Starting UI dev server on port {port}...")
         
         # Set environment variable for API proxy
         env = os.environ.copy()
         env["NODE_ENV"] = "development"
         
         return subprocess.Popen(
-            ["npm", "run", "dev", "--", "-p", str(port)],
+            [self.npm_cmd, "run", "dev", "--", "-p", str(port)],
             cwd=self.ui_dir,
             env=env,
             stdout=subprocess.PIPE,

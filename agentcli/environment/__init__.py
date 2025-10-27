@@ -71,11 +71,11 @@ class EnvironmentManager:
             
         except yaml.constructor.ConstructorError as e:
             if "Duplicate key" in str(e):
-                typer.echo(f"❌ Invalid YAML: {e}", err=True)
-                typer.echo("💡 You have duplicate keys in .agent.yaml (likely multiple uncommented provider.class lines)", err=True)
+                typer.echo(f"[ERROR] Invalid YAML: {e}", err=True)
+                typer.echo("[INFO] You have duplicate keys in .agent.yaml (likely multiple uncommented provider.class lines)", err=True)
                 typer.echo("   Please comment out all but one provider section", err=True)
             else:
-                typer.echo(f"❌ YAML parsing error: {e}", err=True)
+                typer.echo(f"[ERROR] YAML parsing error: {e}", err=True)
             return []
         except Exception as e:
             typer.echo(f"Warning: Could not parse agent config: {e}", err=True)
@@ -100,12 +100,12 @@ class EnvironmentManager:
         is_valid, error_msg, providers = self.validate_provider_configuration(project_dir)
         
         if not is_valid:
-            typer.echo(f"❌ Provider configuration error: {error_msg}", err=True)
+            typer.echo(f"[ERROR] Provider configuration error: {error_msg}", err=True)
             if len(providers) > 1:
-                typer.echo("💡 Please comment out all but one provider in .agent.yaml", err=True)
+                typer.echo("[INFO] Please comment out all but one provider in .agent.yaml", err=True)
                 typer.echo("   Only one provider.class should be active at a time", err=True)
             elif len(providers) == 0:
-                typer.echo("💡 Please uncomment one provider.class in .agent.yaml", err=True)
+                typer.echo("[INFO] Please uncomment one provider.class in .agent.yaml", err=True)
             return False  # Fail safely - don't proceed with ambiguous config
         
         # Check if the single configured provider is Bedrock
@@ -116,8 +116,8 @@ class EnvironmentManager:
         env_vars = {}
         
         if not env_file_path.exists():
-            typer.echo(f"❌ Environment file not found: {env_file_path}", err=True)
-            typer.echo("💡 Check the file path or create the .env file", err=True)
+            typer.echo(f"[ERROR] Environment file not found: {env_file_path}", err=True)
+            typer.echo("[INFO] Check the file path or create the .env file", err=True)
             raise typer.Exit(1)
         
         try:
@@ -147,15 +147,15 @@ class EnvironmentManager:
             env_file_aws_present = bool(env_file_vars and 'AWS_ACCESS_KEY_ID' in env_file_vars and 'AWS_SECRET_ACCESS_KEY' in env_file_vars)
             
             if env_vars_present:
-                typer.echo(f"⚠️  AWS profile '{profile}' specified but environment variables AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY are present", err=True)
-                typer.echo("💡 Environment variables take precedence over profiles in AWS SDK", err=True)
-                typer.echo("💡 Either unset the environment variables or remove --aws-profile to use env vars", err=True)
+                typer.echo(f"[WARNING] AWS profile '{profile}' specified but environment variables AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY are present", err=True)
+                typer.echo("[INFO] Environment variables take precedence over profiles in AWS SDK", err=True)
+                typer.echo("[INFO] Either unset the environment variables or remove --aws-profile to use env vars", err=True)
                 raise typer.Exit(1)
             
             if env_file_aws_present:
-                typer.echo(f"⚠️  AWS profile '{profile}' specified but .env file contains AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY", err=True)
-                typer.echo("💡 Environment file AWS credentials take precedence over profiles in AWS SDK", err=True)
-                typer.echo("💡 Either remove AWS credentials from .env file or remove --aws-profile to use .env credentials", err=True)
+                typer.echo(f"[WARNING] AWS profile '{profile}' specified but .env file contains AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY", err=True)
+                typer.echo("[INFO] Environment file AWS credentials take precedence over profiles in AWS SDK", err=True)
+                typer.echo("[INFO] Either remove AWS credentials from .env file or remove --aws-profile to use .env credentials", err=True)
                 raise typer.Exit(1)
             
             profile_creds = self._get_credentials_from_profile(profile)
@@ -173,8 +173,8 @@ class EnvironmentManager:
                 )
             else:
                 # Env file explicitly provided but doesn't contain AWS credentials - FAIL HARD
-                typer.echo("❌ Environment file provided but contains no AWS credentials", err=True)
-                typer.echo("💡 Add AWS credentials to your .env file:", err=True)
+                typer.echo("[ERROR] Environment file provided but contains no AWS credentials", err=True)
+                typer.echo("[INFO] Add AWS credentials to your .env file:", err=True)
                 typer.echo("   AWS_ACCESS_KEY_ID=your_access_key", err=True)
                 typer.echo("   AWS_SECRET_ACCESS_KEY=your_secret_key", err=True)
                 raise typer.Exit(1)
@@ -221,13 +221,13 @@ class EnvironmentManager:
                 )
             else:
                 # Profile exists but has no credentials
-                typer.echo(f"❌ AWS profile '{profile}' found but contains no credentials", err=True)
-                typer.echo(f"💡 Configure the profile: aws configure --profile {profile}", err=True)
+                typer.echo(f"[ERROR] AWS profile '{profile}' found but contains no credentials", err=True)
+                typer.echo(f"[INFO] Configure the profile: aws configure --profile {profile}", err=True)
                 raise typer.Exit(1)
         except Exception as e:
-            typer.echo(f"❌ Failed to load AWS profile '{profile}': {e}", err=True)
-            typer.echo(f"💡 Check if profile exists: aws configure list-profiles", err=True)
-            typer.echo(f"💡 Create the profile: aws configure --profile {profile}", err=True)
+            typer.echo(f"[ERROR] Failed to load AWS profile '{profile}': {e}", err=True)
+            typer.echo(f"[INFO] Check if profile exists: aws configure list-profiles", err=True)
+            typer.echo(f"[INFO] Create the profile: aws configure --profile {profile}", err=True)
             raise typer.Exit(1)
     
     def _get_credentials_from_boto3(self) -> AWSCredentials:
@@ -296,13 +296,13 @@ class EnvironmentManager:
             is_valid, error_msg, providers = self.validate_provider_configuration(project_dir)
             
             if not is_valid:
-                typer.echo(f"❌ Provider configuration error: {error_msg}", err=True)
+                typer.echo(f"[ERROR] Provider configuration error: {error_msg}", err=True)
                 if len(providers) > 1:
-                    typer.echo("💡 Please comment out all but one provider in .agent.yaml", err=True)
+                    typer.echo("[INFO] Please comment out all but one provider in .agent.yaml", err=True)
                     typer.echo("   Only one provider.class should be active at a time", err=True)
                     typer.echo(f"   Currently active: {', '.join(providers)}", err=True)
                 elif len(providers) == 0:
-                    typer.echo("💡 Please uncomment one provider.class in .agent.yaml", err=True)
+                    typer.echo("[INFO] Please uncomment one provider.class in .agent.yaml", err=True)
                 raise typer.Exit(1)
             
             # Check if the single configured provider is Bedrock
@@ -322,26 +322,26 @@ class EnvironmentManager:
         if aws_creds.access_key_id:
             # Validate credentials - fail fast on validation errors
             if not self.validate_aws_credentials(aws_creds):
-                typer.echo(f"❌ AWS credentials validation failed (source: {aws_creds.source})", err=True)
+                typer.echo(f"[ERROR] AWS credentials validation failed (source: {aws_creds.source})", err=True)
                 
                 # Provide specific guidance based on credential source
                 if aws_creds.source == "env_file":
-                    typer.echo(f"💡 Check AWS credentials in: {env_file}", err=True)
+                    typer.echo(f"[INFO] Check AWS credentials in: {env_file}", err=True)
                 elif aws_creds.source == "environment_variables":
-                    typer.echo("💡 Check AWS environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)", err=True)
+                    typer.echo("[INFO] Check AWS environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)", err=True)
                 elif aws_creds.source.startswith("aws_profile"):
-                    typer.echo(f"💡 Check AWS profile configuration: aws configure --profile {aws_profile}", err=True)
+                    typer.echo(f"[INFO] Check AWS profile configuration: aws configure --profile {aws_profile}", err=True)
                 elif aws_creds.source == "boto3_default":
-                    typer.echo("💡 Check default AWS credentials: aws configure", err=True)
+                    typer.echo("[INFO] Check default AWS credentials: aws configure", err=True)
                 else:
-                    typer.echo("💡 Check AWS credential configuration", err=True)
+                    typer.echo("[INFO] Check AWS credential configuration", err=True)
                 
                 # typer.echo("💡 Verify credentials have sufficient permissions for AWS Bedrock", err=True)
                 raise typer.Exit(1)
         else:
             # No AWS credentials found - this only happens when no explicit options were provided
-            typer.echo("⚠️  No AWS credentials found for Bedrock provider", err=True)
-            typer.echo("💡 Set up AWS credentials:")
+            typer.echo("[WARNING] No AWS credentials found for Bedrock provider", err=True)
+            typer.echo("[INFO] Set up AWS credentials:")
             typer.echo("   1. Create a .env file with AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY")
             typer.echo("   2. Use AWS CLI: aws configure")
             typer.echo("   3. Set environment variables directly")

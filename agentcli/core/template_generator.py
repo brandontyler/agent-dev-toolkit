@@ -24,7 +24,7 @@ class ServerTemplateGenerator:
         """Read a utility file and return its content."""
         file_path = self.core_dir / filename
         if file_path.exists():
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 return f.read()
         return f"# {filename} not found"
     
